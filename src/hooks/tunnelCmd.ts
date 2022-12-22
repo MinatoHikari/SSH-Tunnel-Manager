@@ -1,12 +1,16 @@
 import { useExec } from "@raycast/utils";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, SetStateAction, Dispatch, MutableRefObject } from "react";
 import { Values, Storage, ListData } from "../types";
 import { cache } from "./store";
 
-export const useTunelCmd = (values: Values, listData: ListData[]) => {
-  const [tunnelParams, setTunnelParams] = useState<Partial<Values>>({ ...values });
-
-  const shouldEstablish = useRef(true);
+export const useTunelCmd = (
+  listData: ListData[],
+  setListData: Dispatch<SetStateAction<ListData[]>>,
+  alivePidSet: Set<string>,
+  defaultTunnelParams: Partial<Values>,
+  shouldEstablish: MutableRefObject<boolean>
+) => {
+  const [tunnelParams, setTunnelParams] = useState<Partial<Values>>({ ...defaultTunnelParams });
 
   const { name, sshport, user, remote, localport, remoteport } = tunnelParams;
 
@@ -42,9 +46,18 @@ export const useTunelCmd = (values: Values, listData: ListData[]) => {
   );
 
   useEffect(() => {
-    if (shouldEstablish.current) establish();
-    else shouldEstablish.current = true;
-  }, [tunnelParams]);
+    if (pid) {
+      alivePidSet.add(pid.trim());
+      cache.set(Storage.AlivePidList, JSON.stringify(Array.from(alivePidSet)));
+    }
+    const listItem = listData.find((i) => i.name === name);
+    if (pid && !listItem && tunnelParams.name) {
+      listData.push({ ...(tunnelParams as Values), pid: pid.trim() });
+    } else if (pid && listItem) {
+      listItem.pid = pid.trim();
+    }
+    setListData([...listData]);
+  }, [pid]);
 
   useEffect(() => {
     cache.set(Storage.List, JSON.stringify(listData.filter((i) => i.name)));
@@ -54,13 +67,35 @@ export const useTunelCmd = (values: Values, listData: ListData[]) => {
     });
   }, [listData]);
 
+  useEffect(() => {
+    if (shouldEstablish.current) establish();
+    else shouldEstablish.current = true;
+  }, [tunnelParams, defaultTunnelParams]);
+
   return {
     isLoading,
+    tunnelParams,
     setTunnelParams,
     pid,
     establish,
     mutatePid,
     name,
-    shouldEstablish,
+  };
+};
+
+export const useKillTunnelCmd = () => {
+  const [pidToKill, setPidToKill] = useState<string | null>(null);
+
+  const { revalidate: killTunnel } = useExec("kill", ["-9", `${pidToKill}`], {
+    execute: false,
+  });
+
+  useEffect(() => {
+    if (pidToKill) killTunnel();
+  }, [pidToKill]);
+
+  return {
+    killTunnel,
+    setPidToKill,
   };
 };

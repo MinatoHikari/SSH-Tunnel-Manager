@@ -3,11 +3,6 @@ export enum Storage {
   AlivePidList = "alivePidList",
 }
 
-export enum Mode {
-  Form = "form",
-  List = "list",
-}
-
 export enum TunnelType {
   Local = "local",
   Remote = "remote",

@@ -13,9 +13,9 @@
   "commands": [
     {
       "name": "index",
-      "title": "Ssh Tunnel Manage",
-      "subtitle": "Manage ssh tunnels",
-      "description": "Manage tunnels by system ssh command",
+      "title": "Manage Tunnels",
+      "subtitle": "SSH",
+      "description": "Manage tunnels with system ssh command",
       "mode": "view"
     }
   ],

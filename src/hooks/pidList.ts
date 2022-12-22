@@ -1,12 +1,11 @@
 import { cache } from "./store";
-import { Storage, Mode } from "../types";
+import { Storage } from "../types";
 import { spawn } from "child_process";
 import { useEffect, useState } from "react";
 import { useCache } from "./store";
 
-export const useSshPidList = (getMode: () => Mode) => {
+export const useSshPidList = () => {
   const [reRenderVal, reRender] = useState(false);
-  const modeDep = getMode();
 
   const checkPid = () => {
     let content = "";
@@ -19,7 +18,6 @@ export const useSshPidList = (getMode: () => Mode) => {
     });
 
     process.stderr.on("close", () => {
-      console.log(content);
       if (content) {
         sshPidList.push(...content.split("\n").map((pid) => pid.trim()));
       } else {
@@ -48,13 +46,11 @@ export const useSshPidList = (getMode: () => Mode) => {
   };
 
   const monitor = () => {
-    if (getMode() === Mode.List) {
+    checkPid();
+    const interval = global.setInterval(() => {
       checkPid();
-      const interval = global.setInterval(() => {
-        checkPid();
-      }, 3000);
-      return interval;
-    }
+    }, 3000);
+    return interval;
   };
 
   useEffect(() => {
@@ -62,7 +58,7 @@ export const useSshPidList = (getMode: () => Mode) => {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [reRenderVal, modeDep]);
+  }, [reRenderVal]);
 
   const refreshList = () => {
     reRender((state) => !state);
