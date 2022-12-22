@@ -1,10 +1,12 @@
 import { useExec } from "@raycast/utils";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Values, Storage, ListData } from "../types";
 import { cache } from "./store";
 
 export const useTunelCmd = (values: Values, listData: ListData[]) => {
   const [tunnelParams, setTunnelParams] = useState<Partial<Values>>({ ...values });
+
+  const shouldEstablish = useRef(true);
 
   const { name, sshport, user, remote, localport, remoteport } = tunnelParams;
 
@@ -13,6 +15,7 @@ export const useTunelCmd = (values: Values, listData: ListData[]) => {
     data: pid,
     revalidate: establish,
     mutate: mutatePid,
+    error,
   } = useExec(
     "nohup",
     [
@@ -20,12 +23,12 @@ export const useTunelCmd = (values: Values, listData: ListData[]) => {
       "-N",
       "-oServerAliveInterval=60",
       "-p",
-      `${sshport}`,
-      `${user}@${remote}`,
+      `${sshport?.trim() ?? 22}`,
+      `${user?.trim()}@${remote?.trim()}`,
       "-L",
-      `${localport}:127.0.0.1:${remoteport}`,
+      `${localport?.trim()}:127.0.0.1:${remoteport?.trim()}`,
       ">",
-      `/tmp/${name}.log`,
+      `/tmp/${name?.trim()}.log`,
       "2>&1",
       "&",
       "echo",
@@ -39,7 +42,8 @@ export const useTunelCmd = (values: Values, listData: ListData[]) => {
   );
 
   useEffect(() => {
-    establish();
+    if (shouldEstablish.current) establish();
+    else shouldEstablish.current = true;
   }, [tunnelParams]);
 
   useEffect(() => {
@@ -57,5 +61,6 @@ export const useTunelCmd = (values: Values, listData: ListData[]) => {
     establish,
     mutatePid,
     name,
+    shouldEstablish,
   };
 };

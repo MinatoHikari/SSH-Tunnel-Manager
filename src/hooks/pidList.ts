@@ -47,17 +47,21 @@ export const useSshPidList = (getMode: () => Mode) => {
     });
   };
 
-  useEffect(() => {
-    console.log(global.setInterval);
+  const monitor = () => {
     if (getMode() === Mode.List) {
       checkPid();
       const interval = global.setInterval(() => {
         checkPid();
       }, 3000);
-      return () => {
-        clearInterval(interval);
-      };
+      return interval;
     }
+  };
+
+  useEffect(() => {
+    const interval = monitor();
+    return () => {
+      if (interval) clearInterval(interval);
+    };
   }, [reRenderVal, modeDep]);
 
   const refreshList = () => {

@@ -1,4 +1,4 @@
-import { Form, ActionPanel, Action, List, Icon, Color } from "@raycast/api";
+import { Form, ActionPanel, Action, List, Icon, Color, showToast, closeMainWindow } from "@raycast/api";
 import { useExec } from "@raycast/utils";
 import { useEffect, useState } from "react";
 import { cache, useCache } from "./hooks/store";
@@ -9,7 +9,7 @@ import { useTunelCmd } from "./hooks/tunnelCmd";
 
 export default function Command() {
   const { cachedList, alivePidSet } = useCache();
-  const [mode, setMode] = useState<Mode>(Mode.Form);
+  const [mode, setMode] = useState<Mode>(Mode.List);
   const [listData, setListData] = useState<ListData[]>(cachedList ?? []);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [pidToKill, setPidToKill] = useState<string | null>(null);
@@ -30,11 +30,16 @@ export default function Command() {
   };
 
   const { values, itemProps, handleSubmit } = initForm(listData, (values: Values) => {
-    setTunnelParams({ ...values });
+    if (shouldEstablish.current) setTunnelParams({ ...values });
+    else {
+      listData.push({ ...values, pid: null });
+      setListData([...listData]);
+      shouldEstablish.current = true
+    }
     toList();
   });
 
-  const { setTunnelParams, pid, isLoading, name } = useTunelCmd(values, listData);
+  const { setTunnelParams, pid, isLoading, name, shouldEstablish } = useTunelCmd(values, listData);
 
   const { refreshList } = useSshPidList(() => mode);
 
@@ -50,12 +55,14 @@ export default function Command() {
         delete res.pid;
         return res as Values;
       });
+      showToast({ title: "Tunnel established" });
     } else {
       setPidToKill(tunnelItem.pid);
       alivePidSet.delete(tunnelItem.pid);
       cache.set(Storage.AlivePidList, JSON.stringify(Array.from(alivePidSet)));
       tunnelItem.pid = null;
       setListData([...listData]);
+      showToast({ title: "Tunnel Closed" });
     }
   };
 
@@ -68,6 +75,7 @@ export default function Command() {
       cache.set(Storage.AlivePidList, JSON.stringify(Array.from(alivePidSet)));
       killTunnel();
     }
+    showToast({ title: "Tunnel deleted" });
   };
 
   useEffect(() => {
@@ -95,11 +103,12 @@ export default function Command() {
       isLoading={isLoading}
       actions={
         <ActionPanel>
-          <Action.SubmitForm onSubmit={handleSubmit} />
-          <Action
-            title="Save as draft(WIP)"
-            onAction={() => {
-              return;
+          <Action.SubmitForm title="Create and establish tunnel" onSubmit={handleSubmit} />
+          <Action.SubmitForm
+            title="Create tunnel"
+            onSubmit={(values: Values) => {
+              shouldEstablish.current = false;
+              return handleSubmit(values);
             }}
           />
           <Action
@@ -114,10 +123,10 @@ export default function Command() {
       }
     >
       <Form.Description text="SSH tunnel config" />
-      <Form.TextField title="Name" placeholder="Alias Name of Tunnel" {...itemProps.name} />
+      <Form.TextField title="Name" placeholder="Alias name of tunnel" {...itemProps.name} />
       <Form.TextField title="Local Port" placeholder="Enter a port" {...itemProps.localport} />
       <Form.TextField title="User" placeholder="Enter username" {...itemProps.user} />
-      <Form.TextField title="SSH port" placeholder="Enter ssh port" {...itemProps.sshport} />
+      <Form.TextField title="SSH Port" placeholder="Enter ssh port (default: 22)" {...itemProps.sshport} />
       <Form.TextField title="Remote Host" placeholder="Enter remote host" {...itemProps.remote} />
       <Form.TextField title="Remote Port" placeholder="Enter remote port" {...itemProps.remoteport} />
       <Form.Separator />
@@ -172,9 +181,10 @@ export default function Command() {
               <ActionPanel>
                 <Action title="Connect/Disconnect" onAction={tunnelTrigger} />
                 <Action
-                  title="Edit and recreate Tunnel(WIP)"
+                  title="Connect/Disconnect and close main window"
                   onAction={() => {
-                    return;
+                    tunnelTrigger();
+                    closeMainWindow();
                   }}
                 />
                 <Action
