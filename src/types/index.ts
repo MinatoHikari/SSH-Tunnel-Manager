@@ -10,13 +10,15 @@ export enum TunnelType {
 
 export type Values = {
   name: string;
-  localport: string;
+  localPort: string;
   user: string;
-  sshport: string;
-  remote: string;
-  remoteport: string;
+  sshPort: string;
+  sshHost: string;
+  remoteHost: string;
+  remotePort: string;
   proxy: boolean;
   type: TunnelType;
+  identityFile: string[];
 };
 
 export type ListData = {

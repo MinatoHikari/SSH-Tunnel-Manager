@@ -1,6 +1,6 @@
 import { useExec } from "@raycast/utils";
 import { useState, useEffect, SetStateAction, Dispatch, MutableRefObject } from "react";
-import { Values, Storage, ListData } from "../types";
+import { Values, Storage, ListData, TunnelType } from "../types";
 import { cache } from "./store";
 
 export const useTunelCmd = (
@@ -12,25 +12,25 @@ export const useTunelCmd = (
 ) => {
   const [tunnelParams, setTunnelParams] = useState<Partial<Values>>({ ...defaultTunnelParams });
 
-  const { name, sshport, user, remote, localport, remoteport } = tunnelParams;
+  const { name, sshHost, user, remoteHost, localPort, remotePort, sshPort, type, identityFile } = tunnelParams;
 
   const {
     isLoading,
     data: pid,
     revalidate: establish,
     mutate: mutatePid,
-    error,
   } = useExec(
     "nohup",
     [
       "ssh",
       "-N",
       "-oServerAliveInterval=60",
+      identityFile && identityFile[0] ? `-i ${identityFile[0]}` : "",
       "-p",
-      `${sshport?.trim() ?? 22}`,
-      `${user?.trim()}@${remote?.trim()}`,
-      "-L",
-      `${localport?.trim()}:127.0.0.1:${remoteport?.trim()}`,
+      `${sshPort?.trim() || 22}`,
+      `${user?.trim()}@${sshHost?.trim()}`,
+      `-${type === TunnelType.Local ? "L" : "R"}`,
+      `${localPort?.trim()}:${remoteHost?.trim() || "localhost"}:${remotePort?.trim()}`,
       ">",
       `/tmp/${name?.trim()}.log`,
       "2>&1",

@@ -46,20 +46,23 @@ export function FromScreen(props: { onSubmit: (values: Values) => void; shouldEs
     >
       <Form.Description text="SSH tunnel config" />
       <Form.TextField title="Name" placeholder="Alias name of tunnel" {...itemProps.name} />
-      <Form.TextField title="Local Port" placeholder="Enter a port" {...itemProps.localport} />
-      <Form.TextField title="User" placeholder="Enter username" {...itemProps.user} />
-      <Form.TextField title="SSH Port" placeholder="Enter ssh port (default: 22)" {...itemProps.sshport} />
-      <Form.TextField title="Remote Host" placeholder="Enter remote host" {...itemProps.remote} />
-      <Form.TextField title="Remote Port" placeholder="Enter remote port" {...itemProps.remoteport} />
+      <Form.TextField title="Local Port" placeholder="Enter a port" {...itemProps.localPort} />
+      <Form.TextField title="Username" placeholder="Enter username" {...itemProps.user} />
+      <Form.TextField title="SSH Host" placeholder="Enter ssh host" {...itemProps.sshHost} />
+      <Form.TextField title="SSH Port" placeholder="Enter ssh port (default: 22)" {...itemProps.sshPort} />
+      <Form.TextField
+        title="Target Host"
+        placeholder="Enter target host (default: localhost)"
+        {...itemProps.remoteHost}
+      />
+      <Form.TextField title="Target Port" placeholder="Enter target port" {...itemProps.remotePort} />
       <Form.Separator />
-      <Form.Checkbox id="proxy" title="Proxy(WIP)" label="Use Proxy" storeValue />
+      {/* <Form.Checkbox id="proxy" title="Proxy(WIP)" label="Use Proxy" storeValue /> */}
       <Form.Dropdown id="type" title="Tunnel Type">
         <Form.Dropdown.Item value={TunnelType.Local} title="Local" />
-        <Form.Dropdown.Item value={TunnelType.Remote} title="Remote(WIP)" />
+        <Form.Dropdown.Item value={TunnelType.Remote} title="Remote" />
       </Form.Dropdown>
-      {/* <Form.TagPicker id="tokeneditor" title="Tag picker">
-      <Form.TagPicker.Item value="tagpicker-item" title="Tag Picker Item" />
-    </Form.TagPicker> */}
+      <Form.FilePicker title="Identity File" allowMultipleSelection={false} {...itemProps.identityFile}></Form.FilePicker>
     </Form>
   );
 }

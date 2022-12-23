@@ -4,6 +4,7 @@ import { Values, TunnelType, ListData } from "../types";
 
 enum Message {
   Required = "The item is required",
+  InvalidHost = "Invalid hostname",
 }
 
 export const initForm = (listData: ListData[], onSubmit: (values: Values) => void) => {
@@ -17,6 +18,8 @@ export const initForm = (listData: ListData[], onSubmit: (values: Values) => voi
     }
   };
 
+  const hostRegex = /^([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*)+(\.([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*))*$/;
+
   const { handleSubmit, itemProps, values, setValue } = useForm<Values>({
     onSubmit: (values) => {
       onSubmit(values);
@@ -29,29 +32,31 @@ export const initForm = (listData: ListData[], onSubmit: (values: Values) => voi
           return Message.Required;
         }
       },
-      sshport: (value) => portValidation(value, false),
+      sshPort: (value) => portValidation(value, false),
+      sshHost: (value) => {
+        if (!value) return Message.Required;
+        else if (!value.match(hostRegex)) return Message.InvalidHost;
+      },
       user: (value) => {
         if (!value) return Message.Required;
         else if (!value.match(/^[a-z_][a-z0-9_-]*$/)) return "Invalid username";
       },
-      remote: (value) => {
-        if (!value) return Message.Required;
-        else if (!value.match(/^([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*)+(\.([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*))*$/))
-          return "Invalid hostname";
+      remoteHost: (value) => {
+        if (value && !value.match(hostRegex)) return Message.InvalidHost;
       },
-      localport: (value) => {
-        if (listData.find((i) => i.localport === value)) return "This port had been used";
+      localPort: (value) => {
+        if (listData.find((i) => i.localPort === value)) return "This port had been used";
         return portValidation(value);
       },
-      remoteport: portValidation,
+      remotePort: portValidation,
     },
     initialValues: {
       name: "",
-      localport: "",
+      localPort: "",
       user: "",
-      sshport: "",
-      remote: "",
-      remoteport: "",
+      sshPort: "",
+      remoteHost: "",
+      remotePort: "",
       proxy: false,
       type: TunnelType.Local,
     },

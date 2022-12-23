@@ -28,21 +28,6 @@ export function ListScreen(props: {
 
   const { refreshList } = useSshPidList();
 
-  const generateListData = () => {
-    listData.forEach((data) => {
-      if (data.pid && !alivePidSet.has(data.pid)) data.pid = null;
-    });
-    if (shouldEstablish.current === false && !listData.find((i) => i.name === defaultTunnelParams.name)) {
-      listData.push({ ...(defaultTunnelParams as Values), pid: null });
-    } else if (shouldEstablish.current === true && !listData.find((i) => i.name === defaultTunnelParams.name)) {
-      if (defaultTunnelParams.name) {
-        listData.push({ ...(defaultTunnelParams as Values), pid: null });
-        setTunnelParams({ ...defaultTunnelParams });
-      }
-    }
-    cache.set(Storage.List, JSON.stringify(listData));
-  };
-
   const tunnelTrigger = () => {
     const tunnelItem = listData.find((i) => i.name === selectedId);
     if (!tunnelItem?.pid) {
@@ -77,11 +62,28 @@ export function ListScreen(props: {
     showToast({ title: "Tunnel deleted" });
   };
 
+  const generateListData = () => {
+    listData.forEach((data) => {
+      if (data.pid && !alivePidSet.has(data.pid)) data.pid = null;
+    });
+    if (shouldEstablish.current === false && !listData.find((i) => i.name === defaultTunnelParams.name)) {
+      listData.push({ ...(defaultTunnelParams as Values), pid: null });
+    } else if (shouldEstablish.current === true && !listData.find((i) => i.name === defaultTunnelParams.name)) {
+      if (defaultTunnelParams.name) {
+        listData.push({ ...(defaultTunnelParams as Values), pid: null });
+        setTunnelParams({ ...defaultTunnelParams });
+      }
+    }
+    cache.set(Storage.List, JSON.stringify(listData));
+  };
+
   generateListData();
 
   return (
     <List
       isLoading={isLoading}
+      isShowingDetail={listData.length !== 0}
+      searchBarPlaceholder={"Search Tunnels"}
       onSelectionChange={(id) => {
         setSelectedId(id);
       }}
@@ -108,55 +110,80 @@ export function ListScreen(props: {
         </ActionPanel>
       }
     >
-      {listData.map((i) => {
-        return (
-          <List.Item
-            title={i.name}
-            key={i.name}
-            id={i.name}
-            icon={{
-              source: i.pid ? Icon.CheckCircle : Icon.XMarkCircle,
-              tintColor: i.pid ? Color.Green : Color.Red,
-            }}
-            actions={
-              <ActionPanel>
-                <Action title="Connect/Disconnect" onAction={tunnelTrigger} />
-                <Action
-                  title="Connect/Disconnect and Exit"
-                  onAction={() => {
-                    tunnelTrigger();
-                    closeMainWindow();
-                  }}
+      {listData.length === 0 ? (
+        <List.EmptyView title="No Tunnels Found" description="Press shift+tab to create a tunnel"></List.EmptyView>
+      ) : (
+        listData.map((i) => {
+          return (
+            <List.Item
+              title={i.name}
+              key={i.name}
+              id={i.name}
+              icon={{
+                source: i.pid ? Icon.CheckCircle : Icon.XMarkCircle,
+                tintColor: i.pid ? Color.Green : Color.Red,
+              }}
+              actions={
+                <ActionPanel>
+                  <Action title="Connect/Disconnect" onAction={tunnelTrigger} />
+                  <Action
+                    title="Connect/Disconnect and Exit"
+                    onAction={() => {
+                      tunnelTrigger();
+                      closeMainWindow();
+                    }}
+                  />
+                  <Action
+                    title="Create Tunnel"
+                    onAction={toCreate}
+                    shortcut={{
+                      modifiers: ["shift"],
+                      key: "tab",
+                    }}
+                  />
+                  <Action
+                    onAction={refreshList}
+                    title="Refresh List"
+                    shortcut={{
+                      modifiers: ["shift", "cmd"],
+                      key: "r",
+                    }}
+                  />
+                  <Action
+                    onAction={deleteTunnel}
+                    title="Delet Tunnel"
+                    shortcut={{
+                      modifiers: ["cmd"],
+                      key: "d",
+                    }}
+                  />
+                </ActionPanel>
+              }
+              detail={
+                <List.Item.Detail
+                  metadata={
+                    <List.Item.Detail.Metadata>
+                      <List.Item.Detail.Metadata.Label title="Pid" text={{ value: i.pid ?? "" }} />
+                      <List.Item.Detail.Metadata.Label title="Local Port" text={{ value: i.localPort ?? "" }} />
+                      <List.Item.Detail.Metadata.Label title="Username" text={{ value: i.user ?? "" }} />
+                      <List.Item.Detail.Metadata.Label title="SSH Host" text={{ value: i.sshHost ?? "" }} />
+                      <List.Item.Detail.Metadata.Label title="SSH Port" text={{ value: i.sshPort ?? "" }} />
+                      <List.Item.Detail.Metadata.Label title="Target Host" text={{ value: i.remoteHost ?? "" }} />
+                      <List.Item.Detail.Metadata.Label title="Target Port" text={{ value: i.remotePort ?? "" }} />
+                      <List.Item.Detail.Metadata.Separator />
+                      <List.Item.Detail.Metadata.Label title="Type" text={{ value: i.type ?? "" }} />
+                      <List.Item.Detail.Metadata.Label
+                        title="Identity File"
+                        text={{ value: i.identityFile && i.identityFile[0] ? i.identityFile[0] : "" }}
+                      />
+                    </List.Item.Detail.Metadata>
+                  }
                 />
-                <Action
-                  title="Create Tunnel"
-                  onAction={toCreate}
-                  shortcut={{
-                    modifiers: ["shift"],
-                    key: "tab",
-                  }}
-                />
-                <Action
-                  onAction={refreshList}
-                  title="Refresh List"
-                  shortcut={{
-                    modifiers: ["shift", "cmd"],
-                    key: "r",
-                  }}
-                />
-                <Action
-                  onAction={deleteTunnel}
-                  title="Delet Tunnel"
-                  shortcut={{
-                    modifiers: ["cmd"],
-                    key: "d",
-                  }}
-                />
-              </ActionPanel>
-            }
-          ></List.Item>
-        );
-      })}
+              }
+            />
+          );
+        })
+      )}
     </List>
   );
 }
