@@ -166,16 +166,21 @@ export function ListScreen(props: {
                       <List.Item.Detail.Metadata.Label title="Pid" text={{ value: i.pid ?? "" }} />
                       <List.Item.Detail.Metadata.Label title="Local Port" text={{ value: i.localPort ?? "" }} />
                       <List.Item.Detail.Metadata.Label title="Username" text={{ value: i.user ?? "" }} />
-                      <List.Item.Detail.Metadata.Label title="SSH Host" text={{ value: i.sshHost ?? "" }} />
+                      <List.Item.Detail.Metadata.Label title="SSH Host" text={{ value: i.sshHost || "22" }} />
                       <List.Item.Detail.Metadata.Label title="SSH Port" text={{ value: i.sshPort ?? "" }} />
-                      <List.Item.Detail.Metadata.Label title="Target Host" text={{ value: i.remoteHost ?? "" }} />
+                      <List.Item.Detail.Metadata.Label
+                        title="Target Host"
+                        text={{ value: i.remoteHost || "localhost" }}
+                      />
                       <List.Item.Detail.Metadata.Label title="Target Port" text={{ value: i.remotePort ?? "" }} />
                       <List.Item.Detail.Metadata.Separator />
                       <List.Item.Detail.Metadata.Label title="Type" text={{ value: i.type ?? "" }} />
-                      <List.Item.Detail.Metadata.Label
-                        title="Identity File"
-                        text={{ value: i.identityFile && i.identityFile[0] ? i.identityFile[0] : "" }}
-                      />
+                      {i.identityFile && i.identityFile.length && (
+                        <List.Item.Detail.Metadata.Label
+                          title="Identity File"
+                          text={{ value: i.identityFile[0] ? i.identityFile[0] : "" }}
+                        />
+                      )}
                     </List.Item.Detail.Metadata>
                   }
                 />

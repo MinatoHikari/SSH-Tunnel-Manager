@@ -3,7 +3,7 @@
   "name": "ssh-tunnel-manager",
   "title": "SSH-Tunnel-Manager",
   "description": "Manage ssh tunnels",
-  "icon": "command-icon.png",
+  "icon": "extension_icon.png",
   "author": "MinatoHikari",
   "categories": [
     "System",
