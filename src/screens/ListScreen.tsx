@@ -1,4 +1,4 @@
-import { Action, ActionPanel, closeMainWindow, Color, Icon, List, showToast } from "@raycast/api";
+import { Action, ActionPanel, closeMainWindow, Color, Icon, List, showToast, confirmAlert } from "@raycast/api";
 import { MutableRefObject, useEffect, useState } from "react";
 import { useSshPidList } from "../hooks/pidList";
 import { cache, useCache } from "../hooks/store";
@@ -48,18 +48,27 @@ export function ListScreen(props: {
   };
 
   const deleteTunnel = () => {
-    const itemToDelete = listData.find((i) => i.name === selectedId);
-    const newListData = listData.filter((i) => i.name !== selectedId);
-    setListData(newListData);
-    if (itemToDelete?.pid) {
-      setPidToKill(itemToDelete.pid);
-      alivePidSet.delete(itemToDelete.pid);
-      cache.set(Storage.AlivePidList, JSON.stringify(Array.from(alivePidSet)));
-      killTunnel();
-    }
-    markUsed();
-    setTunnelParams({});
-    showToast({ title: "Tunnel deleted" });
+    confirmAlert({
+      title: "Confirm",
+      message: "Tunnel will be deleted, are you sure?",
+      primaryAction: {
+        title: "Delete",
+        onAction: () => {
+          const itemToDelete = listData.find((i) => i.name === selectedId);
+          const newListData = listData.filter((i) => i.name !== selectedId);
+          setListData(newListData);
+          if (itemToDelete?.pid) {
+            setPidToKill(itemToDelete.pid);
+            alivePidSet.delete(itemToDelete.pid);
+            cache.set(Storage.AlivePidList, JSON.stringify(Array.from(alivePidSet)));
+            killTunnel();
+          }
+          markUsed();
+          setTunnelParams({});
+          showToast({ title: "Tunnel deleted" });
+        },
+      },
+    });
   };
 
   const generateListData = () => {
@@ -175,12 +184,12 @@ export function ListScreen(props: {
                       <List.Item.Detail.Metadata.Label title="Target Port" text={{ value: i.remotePort ?? "" }} />
                       <List.Item.Detail.Metadata.Separator />
                       <List.Item.Detail.Metadata.Label title="Type" text={{ value: i.type ?? "" }} />
-                      {i.identityFile && i.identityFile.length && (
+                      {i.identityFile && i.identityFile.length ? (
                         <List.Item.Detail.Metadata.Label
                           title="Identity File"
                           text={{ value: i.identityFile[0] ? i.identityFile[0] : "" }}
                         />
-                      )}
+                      ) : undefined}
                     </List.Item.Detail.Metadata>
                   }
                 />
