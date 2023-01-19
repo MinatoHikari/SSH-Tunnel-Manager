@@ -146,7 +146,7 @@ export function ListScreen(props: {
                     title="Create Tunnel"
                     onAction={toCreate}
                     shortcut={{
-                      modifiers: ["shift"],
+                      modifiers: ["opt", "shift"],
                       key: "tab",
                     }}
                   />
